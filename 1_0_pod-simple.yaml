@@ -1,0 +1,53 @@
+# https://kubernetes.io/docs/concepts/workloads/pods/pod/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-hello
+  namespace: demo
+  labels:
+    app: nginx-hello
+spec:
+  containers:
+  - name: nginx-hello
+    image: qzschen/nginx-hello
+    ports:
+    - containerPort: 80
+      name: 80tcp
+      protocol: TCP
+    resources:
+      requests:
+        memory: "500Mi"
+        cpu: "1"
+      limits:
+        memory: "700Mi"
+        cpu: "1"
+ # nodeSelector:
+ #   kubernetes.io/hostname: 10.130.62.23
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME          READY   STATUS    RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello   1/1     Running   0          40m   172.17.149.143   10.130.62.10   <none>           <none>
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ cat ./node-taint.tmpl
+# {{printf "%-50s %-12s\n" "Node" "Taint"}}
+# {{- range .items}}
+#     {{- if $taint := (index .spec "taints") }}
+#         {{- .metadata.name }}{{ "\t" }}
+#         {{- range $taint }}
+#             {{- .key }}={{ .value }}:{{ .effect }}{{ "\t" }}
+#         {{- end }}
+#         {{- "\n" }}
+#     {{- end}}
+# {{- end}}
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$  kubectl get nodes -o go-template-file="./node-taint.tmpl"
+# Node                                               Taint
+# 10.130.62.21	ingress-nginx=true:NoSchedule
+# 10.130.62.23	ingress-nginx=true:NoSchedule
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ curl 172.17.149.143
+# Hello nginx
+
+#  kubectl get nodes -o go-template-file="./node-taint.tmpl"
+
+#  kubectl taint nodes 10.130.62.23 ingress-nginx=true:NoSchedule-

@@ -1,0 +1,33 @@
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-hello-service
+  namespace: demo
+spec:
+  selector:
+    app: nginx-hello
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get svc
+# NAME                  TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+# nginx-hello-service   ClusterIP   10.0.59.213   <none>        80/TCP    3s
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo delete svc nginx-hello
+# service "nginx-hello" deleted
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo exec -it nginx-hello bash
+# kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl kubectl exec [POD] -- [COMMAND] instead.
+# [root@nginx-hello /]# curl 10.0.59.213
+# Hello nginx
+# [root@nginx-hello /]# curl nginx-hello-service
+# Hello nginx
+# [root@nginx-hello /]# nslookup nginx-hello-service
+# Server:		10.0.0.10
+# Address:	10.0.0.10#53
+
+# Name:	nginx-hello-service.demo.svc.k8s.xxx.com
+# Address: 10.0.59.213
+
+# [root@nginx-hello /]#

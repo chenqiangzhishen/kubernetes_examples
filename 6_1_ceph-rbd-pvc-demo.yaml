@@ -1,0 +1,36 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ceph-rbd-pvc-demo
+  namespace: demo
+spec:
+  # here should specific to "" to match PV part
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Block
+  resources:
+    requests:
+      storage: 10Gi
+
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get pvc
+# NAME                      STATUS        VOLUME                 CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+# ceph-rbd-pvc-demo   Bound         ceph-rbd-pv-demo    10Gi       RWO                           2s
+
+
+# Kubernetes supports two volumeModes of PersistentVolumes: Filesystem and Block
+# volumeMode is an optional API parameter. 
+# Filesystem is the default mode used when volumeMode parameter is omitted.
+# so if here volumeMode specify to Filesystem, it will produce following errors:
+# Access Modes:
+#     VolumeMode:    Block
+#     Mounted By:    <none>
+#     Events:
+#       Type     Reason                 Age                From                                                                                     Message
+#       ----     ------                 ----               ----                                                                                     -------
+#       Normal   ProvisioningSucceeded  46s                cephfs.csi.ceph.com csi-cephfsplugin-provisioner-0 c2cfd79c-95be-11ea-8efd-ceb0b7167591  Successfully provisioned volume pvc-5a2e83e1a8a511ea
+#       Normal   Provisioning           33s (x2 over 47s)  cephfs.csi.ceph.com csi-cephfsplugin-provisioner-0 c2cfd79c-95be-11ea-8efd-ceb0b7167591  External provisioner is provisioning volume for claim "demo/ceph-rbd-pvc-demo"
+#       Normal   ExternalProvisioning   2s (x18 over 47s)  persistentvolume-controller                                                              waiting for a volume to be created, either by external provisioner "cephfs.csi.ceph.com" or manually created by system administrator
+#       Warning  VolumeMismatch         2s (x5 over 46s)   persistentvolume-controller                                                              Cannot bind PersistentVolume "pvc-5a2e83e1a8a511ea" to requested PersistentVolumeClaim due to incompatible volumeMode.

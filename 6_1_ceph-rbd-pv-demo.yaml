@@ -1,0 +1,29 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ceph-rbd-pv-demo
+  namespace: demo
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 10Gi
+  volumeMode: Block
+  accessModes:
+    - ReadWriteOnce
+  rbd:
+    # ceph administrator will provide the monitor's info as below
+    monitors:
+      - 10.135.142.100:6789
+      - 10.135.142.101:6789
+      - 10.135.142.102:6789
+    # ceph pool
+    pool: kube
+    image: ceph-rbd-pv-demo
+    user: admin
+    # should generat secret first by administrator
+    secretRef:
+      name: csi-rbd-secret
+    fsType: ext4
+    readOnly: false
+  persistentVolumeReclaimPolicy: Recycle

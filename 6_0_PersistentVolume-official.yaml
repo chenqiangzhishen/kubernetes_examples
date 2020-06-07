@@ -1,0 +1,29 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0003
+  # actually, PV is cluster-level resource, so no namespace for it
+  namespace: yournamespace
+spec:
+  capacity:
+    storage: 5Gi
+  # Kubernetes supports two volumeModes of PersistentVolumes: Filesystem and Block
+  # volumeMode is an optional API parameter. 
+  # Filesystem is the default mode used when volumeMode parameter is omitted.
+  volumeMode: Filesystem
+  #   The access modes are:
+  #     ReadWriteOnce – the volume can be mounted as read-write by a single node
+  #     ReadOnlyMany – the volume can be mounted read-only by many nodes
+  #     ReadWriteMany – the volume can be mounted as read-write by many nodes
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /tmp
+    # FIXME: use the right IP
+    server: 172.17.0.2

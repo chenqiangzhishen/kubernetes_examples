@@ -1,0 +1,14 @@
+#   https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-hello-ingress
+  namespace: demo
+spec:
+  rules:
+  - host: nginx-hello.demo.xx.xx.com
+    http:
+      paths:
+      - backend:
+          serviceName: yourservice
+          servicePort: 80

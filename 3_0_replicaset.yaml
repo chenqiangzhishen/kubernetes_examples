@@ -1,0 +1,48 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-hello-rs
+  namespace: demo
+  labels:
+    app: nginx-hello
+spec:
+  # modify replicas according to your case
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-hello
+  template:
+    metadata:
+      labels:
+        app: nginx-hello
+    spec:
+      containers:
+      - name: nginx-hello
+        image: qzschen/nginx-hello
+
+
+
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl apply -f 3_0_replicaset.yaml
+# replicaset.apps/nginx-hello-rs created
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME                   READY   STATUS              RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello            1/1     Running             0          52m   172.17.149.143   10.130.62.10   <none>           <none>
+# nginx-hello-rs-26gzc   0/1     ContainerCreating   0          3s    <none>           10.130.62.11   <none>           <none>
+# nginx-hello-rs-7b7z5   0/1     ContainerCreating   0          3s    <none>           10.130.62.12   <none>           <none>
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME                   READY   STATUS              RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello            1/1     Running             0          52m   172.17.149.143   10.130.62.10   <none>           <none>
+# nginx-hello-rs-26gzc   1/1     Running             0          13s   172.17.65.165    10.130.62.11   <none>           <none>
+# nginx-hello-rs-7b7z5   0/1     ContainerCreating   0          13s   <none>           10.130.62.12   <none>           <none>
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME                   READY   STATUS    RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello            1/1     Running   0          52m   172.17.149.143   10.130.62.10   <none>           <none>
+# nginx-hello-rs-26gzc   1/1     Running   0          17s   172.17.65.165    10.130.62.11   <none>           <none>
+# nginx-hello-rs-7b7z5   1/1     Running   0          17s   172.19.209.19    10.130.62.12   <none>           <none>
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get rs
+# NAME             DESIRED   CURRENT   READY   AGE
+# nginx-hello-rs   3         3         3       30s
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get ep
+# NAME                  ENDPOINTS                                             AGE
+# nginx-hello-service   172.17.149.143:80,172.17.65.165:80,172.19.209.19:80   15m

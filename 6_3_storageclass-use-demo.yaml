@@ -1,0 +1,111 @@
+# https://kubernetes.io/zh/docs/concepts/storage/storage-classes/
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: regcred
+    namespace: demo
+data:
+    # to generate it, pls refer to https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJkb2NrZXItcmVnaXN0cnkuc2FpY3N0YWNrLmNvbSI6IHsKCQkJImF1dGgiOiAiWTJobGJuRnBZVzVuT2xCaGMzTjNNSEprIgoJCX0KCX0sCgkiSHR0cEhlYWRlcnMiOiB7CgkJIlVzZXItQWdlbnQiOiAiRG9ja2VyLUNsaWVudC8xNy4xMi4xLWNlIChsaW51eCkiCgl9Cn0=
+type: kubernetes.io/dockerconfigjson
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: nginx-hello-deployment
+    namespace: demo
+    labels:
+    app: nginx-hello
+spec:
+    replicas: 1
+    selector:
+    matchLabels:
+        app: nginx-hello
+    template:
+    metadata:
+        labels:
+        app: nginx-hello
+    spec:
+        containers:
+        - name: nginx-hello
+        image: qzschen/nginx-hello
+        ports:
+        - containerPort: 80
+        securityContext:
+            privileged: true
+        volumeMounts:
+        # name must match the volume name below
+        - name: rbd 
+            mountPath: "/chenqiang/pv-test"
+        volumes:
+        - name: rbd
+        persistentVolumeClaim:
+            claimName: ceph-rbd-pvc-sc-demo
+        imagePullSecrets:
+        - name: regcred
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: nginx-hello-service
+    namespace: demo
+spec:
+    selector:
+    app: nginx-hello
+    ports:
+    - protocol: TCP
+    port: 80
+    targetPort: 80
+
+# Examples:
+#  show to delete a pvc that is used by pod, you will find it can't be deleted.
+#  only if the pod doesn't use it
+#  So the correct steps to delete a pv is:
+#  1. delete pod or umount it from the pod
+#  2. delete pvc
+#  3. delete pv / storageclass
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get pvc
+# NAME                STATUS        VOLUME                 CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+# ceph-rbd-pvc-demo   Terminating   pvc-b1e87410a8a011ea   1Gi        RWO            csi-cephfs     56m
+# chenqiang@Johnny kubernetes_resources_yaml_examples$  kubectl -n demo describe pvc ceph-rbd-pvc-demo
+# Name:          ceph-rbd-pvc-demo
+# Namespace:     demo
+# StorageClass:  csi-cephfs
+# Status:        Terminating (lasts 35m)
+# Volume:        pvc-b1e87410a8a011ea
+# Labels:        <none>
+# Annotations:   control-plane.alpha.kubernetes.io/leader:
+#                  {"holderIdentity":"c2cfd79c-95be-11ea-8efd-ceb0b7167591","leaseDurationSeconds":15,"acquireTime":"2020-06-07T09:24:38Z","renewTime":"2020-...
+#                pv.kubernetes.io/bind-completed: yes
+#                pv.kubernetes.io/bound-by-controller: yes
+#                volume.beta.kubernetes.io/storage-provisioner: cephfs.csi.ceph.com
+# Finalizers:    [kubernetes.io/pvc-protection]
+# Capacity:      1Gi
+# Access Modes:  RWO
+# VolumeMode:    Filesystem
+# Mounted By:    nginx-hello-deployment-7c46cb4468-bdrdr
+# Events:
+#   Type    Reason                 Age                From                                                                                     Message
+#   ----    ------                 ----               ----                                                                                     -------
+#   Normal  ExternalProvisioning   56m (x3 over 56m)  persistentvolume-controller                                                              waiting for a volume to be created, either by external provisioner "cephfs.csi.ceph.com" or manually created by system administrator
+#   Normal  Provisioning           56m                cephfs.csi.ceph.com csi-cephfsplugin-provisioner-0 c2cfd79c-95be-11ea-8efd-ceb0b7167591  External provisioner is provisioning volume for claim "demo/ceph-rbd-pvc-demo"
+#   Normal  ProvisioningSucceeded  56m                cephfs.csi.ceph.com csi-cephfsplugin-provisioner-0 c2cfd79c-95be-11ea-8efd-ceb0b7167591  Successfully provisioned volume pvc-b1e87410a8a011ea
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME                                      READY   STATUS    RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello-deployment-7c46cb4468-bdrdr   1/1     Running   0          20h   172.17.149.145   10.130.62.10   <none>           <none>
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get deploy
+# NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+# nginx-hello-deployment   1/1     1            1           2d2h
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo delete deploy nginx-hello-deployment
+# deployment.extensions "nginx-hello-deployment" deleted
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# NAME                                      READY   STATUS        RESTARTS   AGE   IP               NODE           NOMINATED NODE   READINESS GATES
+# nginx-hello-deployment-7c46cb4468-bdrdr   1/1     Terminating   0          20h   172.17.149.145   10.130.62.10   <none>           <none>
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get po -o wide
+# No resources found in demo namespace.
+# chenqiang@Johnny kubernetes_resources_yaml_examples$ kubectl -n demo get pvc
+# No resources found in demo namespace.
+# chenqiang@Johnny kubernetes_resources_yaml_examples$

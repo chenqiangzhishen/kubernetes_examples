@@ -1,0 +1,28 @@
+# https://kubernetes.io/docs/concepts/services-networking/network-policies/
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+    name: snprule-default-deny-all
+    namespace: demo
+spec:
+    egress:
+    - to:
+      - namespaceSelector: {}
+      - ipBlock:
+          cidr: 0.0.0.0/0
+    ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            snprule.demo.io/namespace: demo
+      - namespaceSelector:
+          matchLabels:
+            snprule.demo.rancher.io/namespace: kube-system
+      - namespaceSelector:
+          matchLabels:
+            snprule.demo.io/namespace: ingress-nginx
+    # {} of podSelector means select all pod in the namespace
+    podSelector: {}
+    policyTypes:
+    - Ingress
+    - Egress
