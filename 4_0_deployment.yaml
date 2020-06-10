@@ -21,13 +21,13 @@ spec:
         image: qzschen/nginx-hello
         ports:
         - containerPort: 80
-      resources:
-        limits:
-          cpu: "1"
-          memory: 2Gi
-        requests:
-          cpu: 125m
-          memory: 1Gi
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 125m
+            memory: 1Gi
 
 
 
